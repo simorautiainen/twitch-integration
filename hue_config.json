@@ -1,0 +1,7 @@
+{
+  "groupName": "Olohuone",
+  "rewardsToScenes": {
+    "Tunnelmavalot": "Scene 2"
+  },
+  "defaultScene": "Perusvalo"
+}

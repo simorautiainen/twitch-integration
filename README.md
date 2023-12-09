@@ -28,9 +28,31 @@ CLIENT_SECRET
 CHANNEL
 SPOTIFY_CLIENT_ID
 SPOTIFY_CLIENT_SECRET
+TWITCH_DEV_ACCESS_TOKEN
+TWITCH_DEV_REFRESH_TOKEN
+HUE_IP
+HUE_ID
 ```
 All of those currently must be filled
 
 `CHANNEL` should be your channel, so the channel which the chatbot joins and
 which the reward logic asks for permissions
 
+`TWITCH_DEV_ACCESS_TOKEN` and `TWITCH_DEV_REFRESH_TOKEN` are for development and explained how they are below
+
+## To get friends token
+
+1. go to https://twitchtokengenerator.com/
+2. fill the client secret and client id.
+3. For the copes they are defined in [EventListener](lib/EventListener.py#L<13>) and select yes to all
+4. In [TwitchServer](twitchserver.py#L<105>) set the dev=true so it uses the twitch dev access token and refresh token
+instead of oauth tokens
+
+## HUE
+
+there is a tutorial here https://developers.meethue.com/develop/get-started-2/ so first send the
+```json
+{"devicetype":"my_hue_app#iphone peter"}
+```
+And then go press a button physically on the bridge and then in the user id / token will appear in the command response. `HUE_ID` is the response in the username field. `HUE_IP` is the ip
+where the bridges server is in your local network.

@@ -1,10 +1,11 @@
-from lib import ChatBot, EventListener, SiiliCameraController, config, SpotifyController, Redemption
+from lib import ChatBot, EventListener, SiiliCameraController, config, SpotifyController, Redemption, HueController
 import asyncio
 from random import randint
 # lets run our setup
 
+
 class TwitchServerHandler:
-    def __init__(self):
+    def __init__(self, hue_enabled: bool = True):
         client_id, client_secret = config.get_client_info()
         spotify_client_id, spotify_client_secret = config.get_spotify_client_info()
         self.channel = config.get_channel()
@@ -14,6 +15,11 @@ class TwitchServerHandler:
         self.spotify_controller = SpotifyController(spotify_client_id, spotify_client_secret)
         self.siilicam_controller: SiiliCameraController = SiiliCameraController()
         self.stop_event = asyncio.Event()
+        self.hue_enabled = hue_enabled
+        if hue_enabled:
+            hue_id, hue_ip = config.get_hue_env()
+            self.hue_controller = HueController(hue_id, hue_ip)
+            self.hue_config = config.get_hue_config()
     async def init_everything(self, dev=False):
         if dev:
             access_token, refresh_token = config.get_twitch_dev_tokens()
@@ -27,6 +33,13 @@ class TwitchServerHandler:
         # this controls what event listeners do what
         await self.reward_listener.add_reward_callback(self.rewards["SiiliCam"], self.set_random_camera)
         await self.reward_listener.add_reward_callback(self.rewards["Song request"], self.song_request_callback)
+        if self.hue_enabled:
+            for reward_name, reward_id in self.rewards:
+                if reward_name in self.hue_config["rewardsToScenes"].keys():
+                    await self.reward_listener.add_reward_callback(self.rewards[reward_name], self.turn_on_scene)
+            await self.reward_listener.add_reward_callback(self.rewards["Valot päälle/pois"], self.toggle_lights_callback)
+            await self.reward_listener.add_reward_callback(self.rewards["Discovalot"], self.hue_random_colors)
+
     def add_to_que(self, link):
         print(f"adding new song to spotify que {link}")
         try:
@@ -83,6 +96,46 @@ class TwitchServerHandler:
         self.siilicam_controller.set_camera_source(camera_to_edit, camera_to_switch)
         await self.chat_bot.send_message("Kamera vaihdettu :3")
 
+    def toggle_lights_callback(self, event: Redemption):
+        group_name = self.hue_config["groupName"]
+        group_id = self.hue_controller.group_name_to_id(group_name)
+        group = self.hue_controller.get_group(group_id)
+        status = group["state"]["all_on"]
+        print(f"light status: {status}")
+        if status:
+            new_conf = {"on": False}
+            self.hue_controller.edit_group(group_id, new_conf)
+        else:
+            new_conf = {"on": True}
+            self.hue_controller.edit_group(group_id, new_conf)
+            
+    def turn_on_scene(self, event: Redemption):
+        group_name = self.hue_config["groupName"]
+        group_id = self.hue_controller.group_name_to_id(group_name)
+        reward_name = event.event.reward.title
+        scene_name = self.hue_config["rewardsToScenes"][reward_name]
+        scene_id = self.hue_controller.scene_name_to_id(scene_name)
+        self.hue_controller.trigger_scene(group_id, scene_id)
+        
+    def hue_random_colors(self, event: Redemption):
+        hue_color_conf = [{"bri": 254, "sat": 0, "alert": "lselect"}]
+        lights = self.hue_controller.get_lights()
+        for light in lights:
+            if randint(0,10) == 0:
+                hue_color_conf = {"bri": 254, "sat": 254, "alert": "lselect", "on": True}
+            else:  
+                color = self.hue_random_color()
+                hue_color_conf = {"bri": 254,"xy":color, "sat": 0, "alert": "lselect", "on": True}
+
+            self.hue_controller.edit_light(light, hue_color_conf)
+            
+        # set default scene after lightshow
+        group_name = self.hue_config["groupName"]
+        group_id = self.hue_controller.group_name_to_id(group_name)
+        scene_name = self.hue_config["defaultScene"]
+        scene_id = self.hue_controller.scene_name_to_id(scene_name)
+        self.hue_controller.trigger_scene(group_id, scene_id)
+        
     async def stop(self):
         await self.chat_bot.stop()
         await self.reward_listener.stop()
@@ -102,7 +155,7 @@ async def user_input_task(server):
 async def main():
     server = TwitchServerHandler()
 
-    await server.init_everything(dev=True)
+    await server.init_everything()
     asyncio.create_task(user_input_task(server))
     await server.stop_event.wait()
 
