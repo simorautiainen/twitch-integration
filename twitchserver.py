@@ -38,7 +38,7 @@ class TwitchServerHandler:
         if self.hue_enabled:
             for reward_name, reward_id in self.rewards.items():
                 if reward_name in self.hue_config["rewardsToScenes"].keys():
-                    await self.reward_listener.add_reward_callback(self.rewards[reward_name], self.turn_on_scene)
+                    await self.reward_listener.add_reward_callback(reward_id, self.turn_on_scene)
             await self.reward_listener.add_reward_callback(self.rewards["Valot päälle/pois"], self.toggle_lights_callback)
             await self.reward_listener.add_reward_callback(self.rewards["Discovalot"], self.hue_random_colors)
 
