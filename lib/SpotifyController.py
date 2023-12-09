@@ -2,7 +2,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import logging
 import time
-from env_data import get_spotify_client_info
+
 class SpotifyController:
     def __init__(self, client_id, client_secret, scope='user-read-playback-state user-modify-playback-state user-read-currently-playing'):
         self.spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id, client_secret=client_secret, redirect_uri="http://localhost:8080", scope=scope))
@@ -49,18 +49,9 @@ class SpotifyController:
         except Exception as e:
             logging.error(f"Error starting playback: {e}")
             
-
-def main():
-    id, secret = get_spotify_client_info()
-    controller = SpotifyController(id, secret)
-    controller.pause_playback()
-    time.sleep(1)
-    controller.start_playback()
-    result= controller.get_first_search_result("villieläin")
-    print(result)
-    if result:
-        controller.add_to_queue(result["uri"])
-        controller.skip_song()
-        
-if __name__ == "__main__":
-    main()
+    def get_track_info(self, link):
+        """Skips song"""
+        try:
+            return self.spotify.track(link)
+        except:
+            return None

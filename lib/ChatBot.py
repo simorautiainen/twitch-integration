@@ -23,6 +23,10 @@ class ChatBot:
         print('ChatBot is ready, joining channel:', self.channel_to_join)
         await ready_event.chat.join_room(self.channel_to_join)
 
+    async def send_message(self, message:str):
+        print("sending message via chatbot", message)
+        await self.chat.send_message(self.channel_to_join, message)
+        
     async def init(self):
         self.twitch = Twitch(self.client_id, self.client_secret)
         auth = UserAuthenticator(self.twitch, self.USER_SCOPE, force_verify=True)
@@ -32,7 +36,7 @@ class ChatBot:
         self.chat = await Chat(self.twitch)
         self.chat.register_event(ChatEvent.READY, self.on_ready)
         self.chat.start()
-            
+        
     async def run(self):
         # Starts the chat functionality
         if not self.chat:
