@@ -5,7 +5,7 @@ class HueController:
     def __init__(self, id, ip):
         self.id = id
         self.hue_ip = ip
-        self.base_url = f"https://{self.hue_ip}"
+        self.base_url = f"http://{self.hue_ip}"
         self.groups = self.get_groups()
         self.scenes = self.get_scenes()
 
@@ -19,7 +19,7 @@ class HueController:
         
         return -1
     def scene_name_to_id(self, scene_name: str):
-        for key, value in self.groups.items():
+        for key, value in self.scenes.items():
             if value["name"] == scene_name:
                 return key
         

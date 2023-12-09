@@ -48,7 +48,7 @@ class EventListener:
         auth = UserAuthenticator(self.twitch, self.USER_SCOPE)
         print(auth.return_auth_url())
 
-        token, refresh_token = await auth.authenticate(user_token=self.token)
+        token, refresh_token = await auth.authenticate()
 
         await self.twitch.set_user_authentication(token, self.USER_SCOPE, refresh_token)
         user = await first(self.twitch.get_users(logins=[self.channel_to_manage]))

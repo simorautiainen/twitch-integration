@@ -39,8 +39,8 @@ def get_twitch_dev_tokens():
 
 def get_hue_env():
 
-  id = config["HUE_IP"]
-  ip = config["HUE_ID"]
+  id = config["HUE_ID"]
+  ip = config["HUE_IP"]
   return id, ip
 
 def get_hue_config():
